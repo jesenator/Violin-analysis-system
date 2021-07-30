@@ -1,9 +1,8 @@
 import matplotlib.pyplot as plt
 import csv
-from scipy.signal import find_peaks, savgol_filter
+from scipy.signal import find_peaks
 import numpy as np
 import math
-import random
 import re
 
 
@@ -23,7 +22,7 @@ def getCoordinates(string):
     for position in positions:
         p = re.search("[a-c]", position).group(0)
         q = re.search("[1-8]", position).group(0)
-        position = p+q
+        position = p + q
         radius = radii[ord(position[0]) - ord('a')]
         angle = angles[int(position[1]) - 1]
         angle = (angle + 90) / 360 * 2 * math.pi
@@ -33,6 +32,36 @@ def getCoordinates(string):
         # print(str(radius) + ", " + str(angle))
         # print(str(x) + ", " + str(y))
     return xCoords, yCoords
+
+
+def openFile(file):
+    print(file)
+    tsv_file = open(file)
+    read_tsv = csv.reader(tsv_file, delimiter="\t")
+
+    fields = next(read_tsv)
+    data = list(read_tsv)
+    tsv_file.close()
+    return data
+
+
+def getDataArrays(data):
+    freqs, reals, complexs = [], [], []
+    data = np.asarray(list(zip(*data)))
+
+    for i in range(len(data[0])):
+        freqs.append(float(data[0][i]))
+        reals.append(float(data[1][i]))
+        complexs.append(float(data[2][i]))
+
+    complexs = np.asarray(complexs)
+    reals = np.asarray(reals)
+    return freqs, reals, complexs
+
+
+def getPeaks(arr, threshold):
+    peaks = find_peaks(arr, distance=3, prominence=.2, height=threshold)[0]
+    return peaks
 
 
 def plot():
@@ -57,66 +86,55 @@ def plot():
     plt.show()
 
 
-threshold = 1
+def writeTSV():
+    fields = ['tapNum', 'x', 'y']
+    for i in range(len(modalFreqs)):
+        fields.append("mode at %ihz" % modalFreqs[i])
+
+    filename = "modalMagnitudes-test %i-" % testNum
+    for pos in positions:
+        filename += pos + "-"
+    filename += ".tsv"
+
+    # writing to tsv file
+    with open(path.replace("csv\\", "") + filename, 'w') as tsvfile:
+        tsvwriter = csv.writer(tsvfile, delimiter='\t')
+        tsvwriter.writerow(fields)
+
+        for i in range(len(positions)):
+            row = [i + 1, xCoords[i], yCoords[i]]
+            for j in range(len(modalFreqs)):
+                row.append(round(mags[i, j], 4))
+            tsvwriter.writerow(row)
+
+
+thresholds = [.1, 2.5]
 testNum = 8
-path = "C:\\Users\\jesse\\Desktop\\ObieAppFiles\\circular plate\\circular plate %s\\csv\\"
-path = path % str(testNum).zfill(2)
-# positions = ["a1", "b4", "a5", "c2", "b8"]
+# change to path of csv folder
+path = "C:\\Users\\jesse\\Desktop\\ObieAppFiles\\circular plate\\circular plate 08\\csv\\"
+# path = path % str(testNum).zfill(2)
+
 positions = ["1c", "2c", "3c", "4c", "5c", "6c", "7c", "8c"]
-# positions = ["b1", "b5"]
-
-# modalFreqs = np.array([39, 65, 91, 209, 212, 365, 372])
-# modalFreqs = np.array([65])
-# modalFreqs = np.array([91, 209])
+# modalFreqs = np.array([39, 65, 91, 209, 212, 365, 372])  # first 10 from onscale
 modalFreqs = np.array([154, 199, 343])
-xCoords, yCoords = getCoordinates(positions)
-mags = np.ndarray((len(positions)+1, len(modalFreqs)))
 
-offsetFactor = 0
-modalFreqs = modalFreqs - offsetFactor
+xCoords, yCoords = getCoordinates(positions)
+mags = np.ndarray((len(positions) + 1, len(modalFreqs)))
 
 for tapNum in range(len(positions)):
     filename = "circular plate %s H_%s_trf.tsv"
     filename = filename % (str(testNum).zfill(2), str(tapNum + 1).zfill(3))
 
-    print(path + filename)
-    tsv_file = open(path + filename)
-    read_tsv = csv.reader(tsv_file, delimiter="\t")
-    fields = next(read_tsv)
-
-    data = list(read_tsv)
-    tsv_file.close()
-
-    freqs, reals, complexs = [], [], []
-    data = np.asarray(list(zip(*data)))
-
-    for i in range(len(data[0])):
-        freqs.append(float(data[0][i]))
-        reals.append(float(data[1][i]))
-        complexs.append(float(data[2][i]))
-
-    complexs = np.asarray(complexs)
-    reals = np.asarray(reals)
-
-
-    # filtered = savgol_filter(complexs, 31, 1)
-    def getPeaks(arr, threshold):
-        # peaks = find_peaks(arr, height=threshold, distance=200)[0]
-        peaks = find_peaks(arr, distance=3, prominence=.2, height=threshold)[0]
-        return peaks
-
+    data = openFile(path + filename)
+    freqs, reals, complexs = getDataArrays(data)
 
     for freqNum in range(len(modalFreqs)):
         freq = modalFreqs[freqNum]
+        threshold = thresholds[0] if freq < 174 else thresholds[1]
 
-        if freq < 174:
-            threshold = .1
-        else:
-            threshold = 2.5
-        peaksPos = getPeaks(complexs, threshold)
-        peaksNeg = getPeaks(-complexs, threshold)
-        peaks = np.concatenate((peaksPos, peaksNeg))
+        peaks = np.concatenate((getPeaks(complexs, threshold), getPeaks(-complexs, threshold)))
 
+        # get closest peak to
         index = np.argmin(np.abs(np.array(peaks) - freq))
         adjustedFreq = peaks[index]
         if abs(adjustedFreq - freq) > 5:
@@ -125,35 +143,4 @@ for tapNum in range(len(positions)):
         mags[tapNum][freqNum] = complexs[adjustedFreq]
     # plot()
 
-########## creating tsv
-fields = ['tapNum', 'x', 'y']
-for i in range(len(modalFreqs)):
-    fields.append("mode at %ihz" % modalFreqs[i])
-    mags[len(positions)][i] = 0
-
-filename = "modalMagnitudes-"
-for pos in positions:
-    filename += pos + "-"
-filename += ".tsv"
-# writing to tsv file
-additionalZeros = 0
-with open(path.replace("csv\\", "") + filename, 'w') as tsvfile:
-    tsvwriter = csv.writer(tsvfile, delimiter='\t')
-    tsvwriter.writerow(fields)
-
-    for i in range(len(positions)):
-        row = [i+1, xCoords[i], yCoords[i]]
-        for j in range(len(modalFreqs)):
-            row.append(round(mags[i, j], 4))
-        tsvwriter.writerow(row)
-
-    row = [0, 0, 0]
-    for j in range(len(modalFreqs)):
-        row.append(round(mags[len(positions), j], 4))
-    for i in range(len(positions)+1, len(positions)+1 + additionalZeros):
-        row[0] = i
-        row[1] = random.random() * 10
-        row[2] = random.random() * 10
-        tsvwriter.writerow(row)
-
-# plt.show()
+writeTSV()
