@@ -1,0 +1,39 @@
+(8) 7/29/2021 9:01 AM   circular plate 08
+8 pos: ["1c", "2c", "3c", "4c", "5c", "6c", "7c", "8c"]
+
+(7) 7/29/2021 7:46 AM   circular plate 07
+4 positions: ["b1", "b3", "b5", "b7"]
+
+(7) 7/28/2021 2:20 PM   circular plate 07
+
+
+(6) 7/28/2021 9:47 AM   circular plate 06
+
+
+(5) 7/28/2021 9:11 AM   circular plate 05
+
+
+(4) 7/27/2021 4:47 PM   circular plate 04
+
+
+(4) 7/27/2021 3:48 PM   circular plate 04
+
+
+(4) 7/27/2021 3:42 PM   circular plate 04
+
+
+(4) 7/27/2021 3:39 PM   circular plate 04
+
+
+(4) 7/27/2021 3:28 PM   circular plate 04
+
+
+(3) 7/27/2021 1:50 PM   circular plate 03
+
+
+(2) 7/27/2021 9:46 AM   circular plate 02
+
+
+6 positions radially at 2 different angles
+
+a5, b5, c5, a4, b4, c4
