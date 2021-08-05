@@ -3,6 +3,7 @@ import time
 from pyaxidraw import axidraw   # import module
 import math
 import time
+# from utime import sleep_ms, ticks_ms, ticks_diff
 
 
 def getXY(radius, angle):
@@ -30,10 +31,10 @@ centerX = 150
 centerY = 109
 # centerY = 90
 maxRadi = min(centerX, centerY)
-angleNum = 16
-radiusNum = 4
+angleNum = 8
+radiusNum = 3
 totalPostions = angleNum * radiusNum
-print("total positions: " + totalPostions)
+print("total positions: " + str(totalPostions))
 hits = 1
 angles = []
 radii = []
@@ -61,28 +62,48 @@ for i in range(radiusNum):
     radii.append(round(maxRadi * (i+1) / radiusNum, 2))
 print(angles)
 print(radii)
-# xCoords, yCoords = getCoordinates(angles, radii)
+# xCoords, yCoords = getCoordinates
+
+
+def current_milli_time():
+    return round(time.time() * 1000)
+
+
+def getSeconds():
+    seconds = round((current_milli_time() - start_ms) / 1000, 1)
+
+    return seconds
+
+
+start_ms = current_milli_time()
+cycleLength = 3
 
 for angle in angles:
     for radius in radii:
+        # while (getSeconds() % cycleLength) != 0:
+        #     time.sleep(.01)
+
         x, y = getXY(radius, angle)
-        x += centerX
-        y += centerY
+
         # print("polar: " + str(radius) + ", " + str(angle/math.pi) + "pi")
         # print("cartesian: " + str(x) + ", " + str(y))
 
-        ad.moveto(x, y)
+        ad.moveto(x + centerX, y + centerY)
         xCoords.append(x)
         yCoords.append(y)
 
         for i in range(hits):
+
             ad.pendown()
             ad.penup()
+            # while (getSeconds() % cycleLength) != 0:
+            #     time.sleep(.01)
             # time.sleep(.2)
+
         # time.sleep(.5)
 
     # ad.moveto(centerX, centerY)
-    # time.sleep(.5)
+    # time.sleep(.5)x
 
 ad.moveto(0, 0)
 # paste coords lists to main program

@@ -87,13 +87,14 @@ def plot():
 
 
 def writeTSV():
+    print("writing to TSV")
     fields = ['tapNum', 'x', 'y']
     for i in range(len(modalFreqs)):
         fields.append("mode at %ihz" % modalFreqs[i])
 
-    filename = "modalMagnitudes-test %i-" % testNum
-    for pos in positions:
-        filename += pos + "-"
+    filename = "modalMagnitudes-test %i-pos=%i" % (testNum, positionNum)
+    # for pos in positions:
+    #     filename += str(pos) + "-"
     filename += ".tsv"
 
     # writing to tsv file
@@ -101,27 +102,36 @@ def writeTSV():
         tsvwriter = csv.writer(tsvfile, delimiter='\t')
         tsvwriter.writerow(fields)
 
-        for i in range(len(positions)):
+        for i in range(positionNum):
             row = [i + 1, xCoords[i], yCoords[i]]
             for j in range(len(modalFreqs)):
                 row.append(round(mags[i, j], 4))
             tsvwriter.writerow(row)
+    print("done")
 
 
 thresholds = [.1, 2.5]
-testNum = 8
+testNum = 9
 # change to path of csv folder
-path = "C:\\Users\\jesse\\Desktop\\ObieAppFiles\\circular plate\\circular plate 08\\csv\\"
-# path = path % str(testNum).zfill(2)
+path = "C:\\Users\\jesse\\Desktop\\ObieAppFiles\\circular plate\\circular plate %s\\csv\\"
+path = path % str(testNum).zfill(2)
 
-positions = ["1c", "2c", "3c", "4c", "5c", "6c", "7c", "8c"]
+positions = []
+# positions = ["1c", "2c", "3c", "4c", "5c", "6c", "7c", "8c"]
+# positionNum = len(positions)
+positionNum = 24
+for i in range(positionNum):
+    positions.append(i+1)
+
 # modalFreqs = np.array([39, 65, 91, 209, 212, 365, 372])  # first 10 from onscale
 modalFreqs = np.array([154, 199, 343])
 
-xCoords, yCoords = getCoordinates(positions)
-mags = np.ndarray((len(positions) + 1, len(modalFreqs)))
+# xCoords, yCoords = getCoordinates(positions)
+xCoords = [0, 0, 0, 26, 51, 77, 36, 73, 109, 26, 51, 77, 0, 0, 0, -26, -51, -77, -36, -73, -109, -26, -51, -77]
+yCoords = [-36, -73, -109, -26, -51, -77, 0, 0, 0, 26, 51, 77, 36, 73, 109, 26, 51, 77, 0, 0, 0, -26, -51, -77]
+mags = np.ndarray((positionNum + 1, len(modalFreqs)))
 
-for tapNum in range(len(positions)):
+for tapNum in range(positionNum):
     filename = "circular plate %s H_%s_trf.tsv"
     filename = filename % (str(testNum).zfill(2), str(tapNum + 1).zfill(3))
 
