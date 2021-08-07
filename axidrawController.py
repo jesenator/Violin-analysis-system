@@ -31,11 +31,16 @@ centerX = 150
 centerY = 109
 # centerY = 90
 maxRadi = min(centerX, centerY)
-angleNum = 8
+angleNum = 16
 radiusNum = 3
+hits = 3
+# angleNum = 8
+# radiusNum = 1
+# hits = 1
 totalPostions = angleNum * radiusNum
 print("total positions: " + str(totalPostions))
-hits = 1
+cycleLength = 3
+
 angles = []
 radii = []
 xCoords = []
@@ -76,12 +81,11 @@ def getSeconds():
 
 
 start_ms = current_milli_time()
-cycleLength = 3
 
 for angle in angles:
     for radius in radii:
-        # while (getSeconds() % cycleLength) != 0:
-        #     time.sleep(.01)
+        while (getSeconds() % cycleLength) != 0:
+            time.sleep(.01)
 
         x, y = getXY(radius, angle)
 
@@ -91,13 +95,13 @@ for angle in angles:
         ad.moveto(x + centerX, y + centerY)
         xCoords.append(x)
         yCoords.append(y)
-
+        #
         for i in range(hits):
 
             ad.pendown()
             ad.penup()
-            # while (getSeconds() % cycleLength) != 0:
-            #     time.sleep(.01)
+            while (getSeconds() % cycleLength) != 0:
+                time.sleep(.01)
             # time.sleep(.2)
 
         # time.sleep(.5)

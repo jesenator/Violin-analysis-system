@@ -60,7 +60,26 @@ def getDataArrays(data):
 
 
 def getPeaks(arr, threshold):
-    peaks = find_peaks(arr, distance=3, prominence=.2, height=threshold)[0]
+    peaks = find_peaks(arr, distance=10, prominence=.5, height=threshold)[0]
+    return peaks
+
+
+# if the freqs are too close together, remove the one with the lower peak
+def refinePeaks(peaks):
+    peaks.sort()
+    i = 0
+    minDistance = 30
+    while i < len(peaks) - 1:
+        if peaks[i] != peaks[i+1] and abs(peaks[i] - peaks[1 + i]) < minDistance:
+            # print("too close. freq = " + str(peaks[i]) + " and " + str(peaks[i + 1]))
+            firstBigger = abs(complexs[peaks[i]]) > abs(complexs[peaks[i + 1]])
+            if firstBigger:
+                peaks[i + 1] = peaks[i]
+            else:
+                peaks[i] = peaks[i + 1]
+            i -= 2
+        i += 1
+    peaks = np.unique(peaks)
     return peaks
 
 
@@ -69,8 +88,8 @@ def plot():
     fig = plt.figure()
     ax = plt.subplot()
     # ax.set_xlim([30, len(complexs)])
-    ax.set_xlim([30, 450])
-    ax.set_ylim([-5, 5])
+    ax.set_xlim([30, xLimit])
+    ax.set_ylim([-yLimit, yLimit])
     ax.set_xscale('log')
     ax.plot(complexs)
     plt.plot(reals, ":")
@@ -90,9 +109,9 @@ def writeTSV():
     print("writing to TSV")
     fields = ['tapNum', 'x', 'y']
     for i in range(len(modalFreqs)):
-        fields.append("mode at %ihz" % modalFreqs[i])
+        fields.append("mode at %04ihz" % modalFreqs[i])
 
-    filename = "modalMagnitudes-test %i-pos=%i" % (testNum, positionNum)
+    filename = "modalMagnitudes,test %i,pos#=%i,freq#=%i" % (testNum, positionNum, len(modalFreqs))
     # for pos in positions:
     #     filename += str(pos) + "-"
     filename += ".tsv"
@@ -110,8 +129,7 @@ def writeTSV():
     print("done")
 
 
-thresholds = [.1, 2.5]
-testNum = 9
+testNum = 11
 # change to path of csv folder
 path = "C:\\Users\\jesse\\Desktop\\ObieAppFiles\\circular plate\\circular plate %s\\csv\\"
 path = path % str(testNum).zfill(2)
@@ -119,36 +137,49 @@ path = path % str(testNum).zfill(2)
 positions = []
 # positions = ["1c", "2c", "3c", "4c", "5c", "6c", "7c", "8c"]
 # positionNum = len(positions)
-positionNum = 24
+positionNum = 48
 for i in range(positionNum):
-    positions.append(i+1)
+    positions.append(i + 1)
 
 # modalFreqs = np.array([39, 65, 91, 209, 212, 365, 372])  # first 10 from onscale
-modalFreqs = np.array([154, 199, 343])
+modalFreqs = np.array([157, 198, 304, 342, 506, 722, 764, 875, 959, 1060, 1228, 1395])
 
 # xCoords, yCoords = getCoordinates(positions)
-xCoords = [0, 0, 0, 26, 51, 77, 36, 73, 109, 26, 51, 77, 0, 0, 0, -26, -51, -77, -36, -73, -109, -26, -51, -77]
-yCoords = [-36, -73, -109, -26, -51, -77, 0, 0, 0, 26, 51, 77, 36, 73, 109, 26, 51, 77, 0, 0, 0, -26, -51, -77]
+# xCoords = [0, 0, 0, 26, 51, 77, 36, 73, 109, 26, 51, 77, 0, 0, 0, -26, -51, -77, -36, -73, -109, -26, -51, -77]
+# yCoords = [-36, -73, -109, -26, -51, -77, 0, 0, 0, 26, 51, 77, 36, 73, 109, 26, 51, 77, 0, 0, 0, -26, -51, -77]
+xCoords = [0, 0, 0, 14, 28, 42, 26, 51, 77, 34, 67, 101, 36, 73, 109, 34, 67, 101, 26, 51, 77, 14, 28, 42, 0, 0, 0, -14, -28, -42, -26, -51, -77, -34, -67, -101, -36, -73, -109, -34, -67, -101, -26, -51, -77, -14, -28, -42]
+yCoords = [-36, -73, -109, -34, -67, -101, -26, -51, -77, -14, -28, -42, 0, 0, 0, 14, 28, 42, 26, 51, 77, 34, 67, 101, 36, 73, 109, 34, 67, 101, 26, 51, 77, 14, 28, 42, 0, 0, 0, -14, -28, -42, -26, -51, -77, -34, -67, -101]
 mags = np.ndarray((positionNum + 1, len(modalFreqs)))
+xLimit = 1500
+yLimit = 13
+
 
 for tapNum in range(positionNum):
     filename = "circular plate %s H_%s_trf.tsv"
     filename = filename % (str(testNum).zfill(2), str(tapNum + 1).zfill(3))
-
     data = openFile(path + filename)
     freqs, reals, complexs = getDataArrays(data)
 
+    # thresholds = [.2, .3, .4, .4, .5, .5]
+    # threshold = thresholds[freqNum]
+    threshold = .2
+    peaks = np.concatenate((getPeaks(complexs[:xLimit], threshold), getPeaks(-complexs[:xLimit], threshold)))
+    peaks = refinePeaks(peaks)
+    print(peaks)
+
     for freqNum in range(len(modalFreqs)):
         freq = modalFreqs[freqNum]
-        threshold = thresholds[0] if freq < 174 else thresholds[1]
-
-        peaks = np.concatenate((getPeaks(complexs, threshold), getPeaks(-complexs, threshold)))
 
         # get closest peak to
         index = np.argmin(np.abs(np.array(peaks) - freq))
         adjustedFreq = peaks[index]
-        if abs(adjustedFreq - freq) > 5:
+
+        if min(freq/adjustedFreq, adjustedFreq/freq) < .95:
+            # print(str(adjustedFreq) + " and " + str(freq) + " are too far apart")
+            # print(min(freq/adjustedFreq, adjustedFreq/freq))
             adjustedFreq = freq
+
+        modalFreqs[freqNum] = adjustedFreq
 
         mags[tapNum][freqNum] = complexs[adjustedFreq]
     # plot()
