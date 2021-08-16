@@ -1,5 +1,3 @@
-import time
-
 from pyaxidraw import axidraw   # import module
 import math
 import time
